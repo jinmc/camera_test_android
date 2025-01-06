@@ -3,7 +3,10 @@ package com.example.myapplication
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.media.ImageReader
@@ -50,12 +53,16 @@ class MainActivity : AppCompatActivity() {
                 var bytes = ByteArray(buffer.remaining())
                 buffer.get(bytes)
 
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                val rotatedBitmap = rotateBitmap(bitmap, 90f)
+
 //                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
                 val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
                 val file = File(picturesDir, "thisimage.jpg")
                 val opStream = FileOutputStream(file)
 //                val file = File(getExternalFilesDir(null), "thisimage.jpg")
-                opStream.write(bytes)
+//                opStream.write(bytes)
+                rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, opStream)
 
                 opStream.close()
                 image.close()
@@ -167,5 +174,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Camera permission is required", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
+        val matrix = Matrix()
+        matrix.postRotate(degrees)
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }
