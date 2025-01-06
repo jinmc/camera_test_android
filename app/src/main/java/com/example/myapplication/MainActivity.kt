@@ -3,10 +3,7 @@ package com.example.myapplication
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.*
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -21,10 +18,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var handlerThread: HandlerThread
     lateinit var cameraManager: CameraManager
     lateinit var textureView: TextureView
-    lateinit var cameraCaptueSession: CameraCaptureSession
+    lateinit var cameraCaptureSession: CameraCaptureSession
     lateinit var cameraDevice: CameraDevice
     lateinit var captureRequest: CaptureRequest
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,19 +33,13 @@ class MainActivity : AppCompatActivity() {
         handlerThread.start()
         handler = Handler(handlerThread.looper)
 
-        textureView.surfaceTextureListener = object: TextureView.SurfaceTextureListener {
-            override fun onSurfaceTextureAvailable(
-                surface: SurfaceTexture,
-                width: Int,
-                height: Int
-            ) {
+        textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                open_camera()
             }
 
-            override fun onSurfaceTextureSizeChanged(
-                surface: SurfaceTexture,
-                width: Int,
-                height: Int
-            ) {
+            override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
+                // Handle size change if needed
             }
 
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
@@ -57,30 +47,29 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+                // Handle texture update if needed
             }
-
         }
-
     }
 
     @SuppressLint("MissingPermission")
     fun open_camera() {
-        cameraManager.openCamera(cameraManager.cameraIdList[0], object: CameraDevice.StateCallback() {
+        cameraManager.openCamera(cameraManager.cameraIdList[0], object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 cameraDevice = camera
                 capReq = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                var surface = Surface(textureView.surfaceTexture)
+                val surface = Surface(textureView.surfaceTexture)
                 capReq.addTarget(surface)
 
-                cameraDevice.createCaptureSession(listOf(surface), object: CameraCaptureSession.StateCallback() {
+                cameraDevice.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
-                        cameraCaptueSession = session
+                        cameraCaptureSession = session
                         captureRequest = capReq.build()
-                        cameraCaptueSession.setRepeatingRequest(captureRequest, null, handler)
+                        cameraCaptureSession.setRepeatingRequest(captureRequest, null, handler)
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        TODO("Not yet implemented")
+                        // Handle configuration failure
                     }
                 }, handler)
             }
@@ -96,21 +85,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun get_permissions() {
-        // Get permissions
-        var permissionsList = mutableListOf<String>()
-        permissionsList.add(android.Manifest.permission.CAMERA)
-        permissionsList.add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        permissionsList.add(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-
-        // Request permissions
+        val permissionsList = mutableListOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        )
         requestPermissions(permissionsList.toTypedArray(), 1)
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Handle permission results if needed
     }
 }
