@@ -2,14 +2,22 @@ package com.example.myapplication
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
+import android.media.ImageReader
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
+import android.provider.ContactsContract.CommonDataKinds.Im
 import android.view.Surface
 import android.view.TextureView
+import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,17 +29,45 @@ class MainActivity : AppCompatActivity() {
     lateinit var cameraCaptureSession: CameraCaptureSession
     lateinit var cameraDevice: CameraDevice
     lateinit var captureRequest: CaptureRequest
+    lateinit var imageReader: ImageReader
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         get_permissions()
 
+        imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 1)
+        imageReader.setOnImageAvailableListener(object: ImageReader.OnImageAvailableListener{
+            override fun onImageAvailable(reader: ImageReader) {
+                var image = reader.acquireLatestImage()
+                var buffer = image.planes[0].buffer
+                var bytes = ByteArray(buffer.remaining())
+                buffer.get(bytes)
+
+                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
+                var opStream = FileOutputStream(file)
+                opStream.write(bytes)
+
+                opStream.close()
+                image.close()
+                Toast.makeText(this@MainActivity, "Image captured", Toast.LENGTH_SHORT).show()
+            }
+        }, handler)
+
         textureView = findViewById(R.id.textureView)
         cameraManager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
         handlerThread = HandlerThread("videoThread")
         handlerThread.start()
         handler = Handler(handlerThread.looper)
+
+        findViewById<Button>(R.id.capture).apply {
+            setOnClickListener {
+                capReq = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                capReq.addTarget(imageReader.surface)
+                cameraCaptureSession.capture(capReq.build(), null, handler)
+            }
+        }
 
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
@@ -52,6 +88,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
     @SuppressLint("MissingPermission")
     fun open_camera() {
         cameraManager.openCamera(cameraManager.cameraIdList[0], object : CameraDevice.StateCallback() {
@@ -61,7 +99,7 @@ class MainActivity : AppCompatActivity() {
                 val surface = Surface(textureView.surfaceTexture)
                 capReq.addTarget(surface)
 
-                cameraDevice.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
+                cameraDevice.createCaptureSession(listOf(surface, imageReader.surface), object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         cameraCaptureSession = session
                         captureRequest = capReq.build()
