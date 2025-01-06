@@ -50,8 +50,11 @@ class MainActivity : AppCompatActivity() {
                 var bytes = ByteArray(buffer.remaining())
                 buffer.get(bytes)
 
-                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
-                var opStream = FileOutputStream(file)
+//                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
+                val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val file = File(picturesDir, "thisimage.jpg")
+                val opStream = FileOutputStream(file)
+//                val file = File(getExternalFilesDir(null), "thisimage.jpg")
                 opStream.write(bytes)
 
                 opStream.close()
