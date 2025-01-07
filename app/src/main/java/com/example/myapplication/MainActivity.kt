@@ -60,7 +60,21 @@ class MainActivity : AppCompatActivity() {
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 val rotatedBitmap = rotateBitmap(bitmap, 90f)
 
-                // Object Detection 실행
+                // Measure start time
+                //val startTime = System.currentTimeMillis()
+                val startTime = System.nanoTime()
+
+                // Measure end time
+
+                //val endTime = System.currentTimeMillis()
+                val endTime = System.nanoTime()
+
+                // Calculate and log the duration
+                val duration = endTime - startTime
+
+                println("ObjectDetection : Object detection took $duration ns")
+
+                // Object Detection execution
                 val detectionResults = objectDetector.detect(rotatedBitmap)
 
                 detectionResults.forEach { detection ->
