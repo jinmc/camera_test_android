@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var cameraManager: CameraManager
     lateinit var textureView: TextureView
     lateinit var cameraCaptureSession: CameraCaptureSession
-    lateinit var cameraDevice: CameraDevice
+    private var cameraDevice: CameraDevice? = null
     lateinit var captureRequest: CaptureRequest
     lateinit var imageReader: ImageReader
     private lateinit var objectDetector: ObjectDetectionHelper
@@ -107,9 +107,14 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.capture).apply {
             setOnClickListener {
-                capReq = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-                capReq.addTarget(imageReader.surface)
-                cameraCaptureSession.capture(capReq.build(), null, handler)
+                cameraDevice?.let {
+                    capReq = it.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                    capReq.addTarget(imageReader.surface)
+                    cameraCaptureSession.capture(capReq.build(), null, handler)
+                } ?: run {
+                    Toast.makeText(this@MainActivity, "Camera not ready", Toast.LENGTH_SHORT).show()
+                }
+
             }
         }
 
@@ -134,41 +139,48 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraDevice.close()
+        cameraDevice?.close()
         handlerThread.quitSafely()
     }
 
     @SuppressLint("MissingPermission")
     fun open_camera() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            cameraManager.openCamera(cameraManager.cameraIdList[0], object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) {
-                    cameraDevice = camera
-                    capReq = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    val surface = Surface(textureView.surfaceTexture)
-                    capReq.addTarget(surface)
+            val cameraIdList = cameraManager.cameraIdList
+            if (cameraIdList.isNotEmpty()) {
+                cameraManager.openCamera(cameraIdList[0], object : CameraDevice.StateCallback() {
+                    override fun onOpened(camera: CameraDevice) {
+                        cameraDevice = camera
+                        capReq = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                        val surface = Surface(textureView.surfaceTexture)
+                        capReq.addTarget(surface)
 
-                    cameraDevice.createCaptureSession(listOf(surface, imageReader.surface), object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            cameraCaptureSession = session
-                            captureRequest = capReq.build()
-                            cameraCaptureSession.setRepeatingRequest(captureRequest, null, handler)
-                        }
+                        camera.createCaptureSession(listOf(surface, imageReader.surface), object : CameraCaptureSession.StateCallback() {
+                            override fun onConfigured(session: CameraCaptureSession) {
+                                cameraCaptureSession = session
+                                captureRequest = capReq.build()
+                                cameraCaptureSession.setRepeatingRequest(captureRequest, null, handler)
+                            }
 
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            // Handle configuration failure
-                        }
-                    }, handler)
-                }
+                            override fun onConfigureFailed(session: CameraCaptureSession) {
+                                // Handle configuration failure
+                            }
+                        }, handler)
+                    }
 
-                override fun onDisconnected(camera: CameraDevice) {
-                    cameraDevice.close()
-                }
+                    override fun onDisconnected(camera: CameraDevice) {
+                        cameraDevice?.close()
+                        cameraDevice = null
+                    }
 
-                override fun onError(camera: CameraDevice, error: Int) {
-                    cameraDevice.close()
-                }
-            }, handler)
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        cameraDevice?.close()
+                        cameraDevice = null
+                    }
+                }, handler)
+            } else {
+                Toast.makeText(this, "No camera available", Toast.LENGTH_SHORT).show()
+            }
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1)
         }

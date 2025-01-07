@@ -13,13 +13,13 @@ class ObjectDetectionHelper(context: Context) {
     init {
         val optionsBuilder =
             ObjectDetector.ObjectDetectorOptions.builder()
-                .setScoreThreshold(0.5f)
-                .setMaxResults(3)
+                .setScoreThreshold(0.3f)
+                .setMaxResults(5)
         val options = optionsBuilder.build()
 
         objectDetector = ObjectDetector.createFromFileAndOptions(
             context,
-            "model.tflite",
+            "efficientdet-lite2.tflite",
             options
         )
     }
