@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileOutputStream
+import com.example.myapplication.ObjectDetectionHelper
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var cameraDevice: CameraDevice
     lateinit var captureRequest: CaptureRequest
     lateinit var imageReader: ImageReader
+    private lateinit var objectDetector: ObjectDetectionHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         handlerThread = HandlerThread("videoThread")
         handlerThread.start()
         handler = Handler(handlerThread.looper)
+        objectDetector = ObjectDetectionHelper(this) // ObjectDetector 초기화
 
         imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 1)
         imageReader.setOnImageAvailableListener(object: ImageReader.OnImageAvailableListener{
@@ -53,8 +56,23 @@ class MainActivity : AppCompatActivity() {
                 var bytes = ByteArray(buffer.remaining())
                 buffer.get(bytes)
 
+
                 val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 val rotatedBitmap = rotateBitmap(bitmap, 90f)
+
+                // Object Detection 실행
+                val detectionResults = objectDetector.detect(rotatedBitmap)
+
+                detectionResults.forEach { detection ->
+                    val boundingBox = detection.boundingBox
+                    val category = detection.categories.firstOrNull()
+
+                    if (category != null) {
+                        val label = category.label
+                        val confidence = category.score
+                        println("Detected $label with confidence $confidence at $boundingBox")
+                    }
+                }
 
 //                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
                 val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)

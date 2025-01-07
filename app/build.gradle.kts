@@ -47,6 +47,10 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+    implementation("org.tensorflow:tensorflow-lite:2.13.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.3")
+    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.3")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
