@@ -52,53 +52,56 @@ class MainActivity : AppCompatActivity() {
         imageReader.setOnImageAvailableListener(object: ImageReader.OnImageAvailableListener{
             override fun onImageAvailable(reader: ImageReader) {
                 var image = reader.acquireLatestImage()
-                var buffer = image.planes[0].buffer
-                var bytes = ByteArray(buffer.remaining())
-                buffer.get(bytes)
+                image?.let {
+                    var buffer = image.planes[0].buffer
+                    var bytes = ByteArray(buffer.remaining())
+                    buffer.get(bytes)
 
 
-                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                val rotatedBitmap = rotateBitmap(bitmap, 90f)
+                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+//                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
+                    val rotatedBitmap = bitmap
 
-                // Measure start time
-                //val startTime = System.currentTimeMillis()
-                val startTime = System.nanoTime()
+                    // Measure start time
+                    val startTime = System.currentTimeMillis()
+//                    val startTime = System.nanoTime()
 
-                // Measure end time
+                    // Object Detection execution
+                    val detectionResults = objectDetector.detect(rotatedBitmap)
 
-                //val endTime = System.currentTimeMillis()
-                val endTime = System.nanoTime()
+                    val endTime = System.currentTimeMillis()
+//                    val endTime = System.nanoTime()
 
-                // Calculate and log the duration
-                val duration = endTime - startTime
+                    // Calculate and log the duration
+                    val duration = endTime - startTime
 
-                println("ObjectDetection : Object detection took $duration ns")
+                    println("ObjectDetection : Object detection took $duration ms")
 
-                // Object Detection execution
-                val detectionResults = objectDetector.detect(rotatedBitmap)
+                    detectionResults.forEach { detection ->
+                        val boundingBox = detection.boundingBox
+                        val category = detection.categories.firstOrNull()
 
-                detectionResults.forEach { detection ->
-                    val boundingBox = detection.boundingBox
-                    val category = detection.categories.firstOrNull()
-
-                    if (category != null) {
-                        val label = category.label
-                        val confidence = category.score
-                        println("Detected $label with confidence $confidence at $boundingBox")
+                        if (category != null) {
+                            val label = category.label
+                            val confidence = category.score
+                            println("Detected $label with confidence $confidence at $boundingBox")
+                        }
                     }
-                }
 
 //                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
-                val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                val file = File(picturesDir, "thisimage.jpg")
-                val opStream = FileOutputStream(file)
+                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val file = File(picturesDir, "thisimage.jpg")
+                    val opStream = FileOutputStream(file)
 //                val file = File(getExternalFilesDir(null), "thisimage.jpg")
 //                opStream.write(bytes)
-                rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, opStream)
+                    rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, opStream)
 
-                opStream.close()
-                image.close()
-                Toast.makeText(this@MainActivity, "Image captured", Toast.LENGTH_SHORT).show()
+                    opStream.close()
+                    image.close()
+                    Toast.makeText(this@MainActivity, "Image captured", Toast.LENGTH_SHORT).show()
+
+                    it.close()
+                }
             }
         }, handler)
 
