@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileOutputStream
 import com.example.myapplication.ObjectDetectionHelper
+import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
 
@@ -87,6 +88,20 @@ class MainActivity : AppCompatActivity() {
                             println("Detected $label with confidence $confidence at $boundingBox")
                         }
                     }
+
+                    val customDetections = detectionResults.map { result ->
+                        Detection(
+                            boundingBox = result.boundingBox,
+                            label = result.categories.firstOrNull()?.label ?: "",
+                            confidence = result.categories.firstOrNull()?.score ?: 0f
+                        )
+                    }
+
+                    // Start DisplayImageActivity with the captured image and detections
+                    val intent = Intent(this@MainActivity, DisplayImageActivity::class.java)
+                    intent.putExtra("image", rotatedBitmap)
+                    intent.putParcelableArrayListExtra("detections", ArrayList(customDetections))
+                    startActivity(intent)
 
 //                var file = File(Environment.getExternalStorageDirectory().toString() + "/thisimage.jpg")
                     val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
