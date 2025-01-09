@@ -25,6 +25,7 @@ import java.io.File
 import java.io.FileOutputStream
 import com.example.myapplication.ObjectDetectionHelper
 import android.content.Intent
+import java.io.ByteArrayOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -98,8 +99,17 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     // Start DisplayImageActivity with the captured image and detections
+//                    val intent = Intent(this@MainActivity, DisplayImageActivity::class.java)
+//                    intent.putExtra("image", rotatedBitmap)
+//                    intent.putParcelableArrayListExtra("detections", ArrayList(customDetections))
+//                    startActivity(intent)
+
+                    val stream = ByteArrayOutputStream()
+                    rotatedBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    val byteArray = stream.toByteArray()
+
                     val intent = Intent(this@MainActivity, DisplayImageActivity::class.java)
-                    intent.putExtra("image", rotatedBitmap)
+                    intent.putExtra("image", byteArray)
                     intent.putParcelableArrayListExtra("detections", ArrayList(customDetections))
                     startActivity(intent)
 
