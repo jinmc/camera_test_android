@@ -61,8 +61,8 @@ class MainActivity : AppCompatActivity() {
 
 
                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-//                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
-                    val rotatedBitmap = bitmap
+                    val rotatedBitmap = rotateBitmap(bitmap, 90f)
+//                    val rotatedBitmap = bitmap
 
                     // Measure start time
                     val startTime = System.currentTimeMillis()
